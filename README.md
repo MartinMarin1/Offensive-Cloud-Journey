@@ -42,4 +42,5 @@ For every lab or research project, I follow a structured approach:
 ## 🤝 Let's Connect
 I am constantly learning and looking for new challenges in the Cloud Security space. Feel free to reach out!
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)]# Offensive Cloud Journey: Security Research & Lab Writeups 🛡️☁️
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=for-the-badge&logo=linkedin)](https://www.linkedin.com/in/martin-marini-671b6329/)
+[![GitHub](https://img.shields.io/badge/GitHub-Follow-black?style=for-the-badge&logo=github)](https://github.com/MartinMarin1)
