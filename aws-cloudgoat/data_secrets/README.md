@@ -13,6 +13,7 @@ Starting point: AWS Access Key and Secret Key.
 
 Goal: Retrieve the final "flag" stored in the Secrets Manager.
 
+
 ---
 
 ## 🚀 Step 1: First steps and "Whoami?"
@@ -28,6 +29,7 @@ Before moving an inch, I had to confirm the credentials actually worked and see 
 <p align="center">
   <img src="assests/Secrets Keys - data_secrets.png" width="700">
 </p>
+
 
 ---
 
@@ -52,6 +54,7 @@ Found something! There is an EC2 instance running and, most importantly, it has 
   <img src="assests/describe instances.png" width="950">
 </p>
 
+
 ---
 
 ## 🏹 Step 3: Storming the EC2 Instance
@@ -74,6 +77,7 @@ Password: CloudGoatInstancePassword!
 <p align="center">
   <img src="assests/describe-user-data.png" width="900">
 </p>
+
 
 ---
 
@@ -105,6 +109,7 @@ Now acting as ec2_pwned, I tried going straight for the Secrets Manager, but I g
 
 Bingo! I found a classic leak: credentials for a user named db_user were hardcoded directly into the Lambda's environment variables. This is a very common developer mistake.
 
+
 ---
 
 ## 🏁 Step 6: The final blow to the Secrets Manager
@@ -124,6 +129,7 @@ aws secretsmanager get-secret-value --secret-id [NAME] --profile db_user_pwned
 </p>
 
 Mission accomplished! I managed to reach the final flag after jumping through three different identities.
+
 
 ---
 
@@ -153,6 +159,7 @@ This scenario is a textbook example of "Security through Obscurity" failing agai
 ### 5. Over-permissive IAM Policies
 * **The Flaw:** The `db_user` had global read access to Secrets Manager (`Resource: "*"`).
 * **The Fix:** Use **Resource-level permissions**. Scope down the policy to the specific ARN of the secret the user needs to access.
+
 
 ---
 

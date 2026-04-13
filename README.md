@@ -20,7 +20,7 @@ My goal is to bridge the gap between "knowing" cloud services and "understanding
 ### 🐐 AWS CloudGoat Scenarios
 | Scenario | Core Concept | Difficulty | Link |
 | :--- | :--- | :--- | :--- |
-| **data_secrets** | `iam:PassRole` & EC2 Exploit | Easy | [Writeup](./aws-cloudgoat/data_secrets/) |
+| **data_secrets** | `ec2:DescribeInstanceAttribute` & EC2 Exploit | Easy | [Writeup](./aws-cloudgoat/data_secrets/) |
 | *In Progress* | IAM User/Role enumeration | Medium | TBD |
 
 ### 🏗️ CI/CD & DevSecOps
