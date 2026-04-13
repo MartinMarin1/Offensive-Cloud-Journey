@@ -100,10 +100,16 @@ I configured my third and final profile: db_user_pwned. This was my last card to
 
 ![list-secrets](assests/list-secrets.png)
 
+<p align="center">
+  <img src="assests/list-secrets.png" width="600">
+</p>
+
 Now that I had the secret name, all that was left was to read it:
 aws secretsmanager get-secret-value --secret-id [NAME] --profile db_user_pwned
 
-![final-flag](assests/final-flag.png)
+<p align="center">
+  <img src="assests/final-flag.png" width="600">
+</p>
 
 Mission accomplished! I managed to reach the final flag after jumping through three different identities.
 
