@@ -26,7 +26,7 @@ Before moving an inch, I had to confirm the credentials actually worked and see 
 ```aws sts get-caller-identity --profile data_secrets```
 
 <p align="center">
-  <img src="assests/Secrets Keys - data_secrets.png>" width="700">
+  <img src="assests/Secrets Keys - data_secrets.png" width="700">
 </p>
 
 ---
