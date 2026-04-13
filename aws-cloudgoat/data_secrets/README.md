@@ -49,7 +49,7 @@ I started throwing commands to see what was alive in the account: S3, Lambda, RD
 Found something! There is an EC2 instance running and, most importantly, it has an IAM Role attached. This is my "foothold."
 
 <p align="center">
-  <img src="assests/describe instances.png" width="800">
+  <img src="assests/describe instances.png" width="950">
 </p>
 
 ---
@@ -86,7 +86,6 @@ Looking for another vector attack, I tried to see if I could modify the Security
 
 So the strategy was simple: log in via SSH using the credentials I stole from the UserData. Once inside, my target was the IMDS (Metadata Service) to see if I could "grab" the credentials from the instance's role.
 
-Bash:
 ```curl http://169.254.169.254/latest/meta-data/iam/security-credentials/cg-ec2-role-[ID]```
 
 <p align="center">
@@ -101,7 +100,7 @@ Now acting as ec2_pwned, I tried going straight for the Secrets Manager, but I g
 ```aws lambda list-functions --profile ec2_pwned```
 
 <p align="center">
-  <img src="assests/lambda-describe-function.png" width="950">
+  <img src="assests/lambda-describe-function.png" width="850">
 </p>
 
 Bingo! I found a classic leak: credentials for a user named db_user were hardcoded directly into the Lambda's environment variables. This is a very common developer mistake.
