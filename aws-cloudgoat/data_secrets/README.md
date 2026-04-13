@@ -25,7 +25,9 @@ Before moving an inch, I had to confirm the credentials actually worked and see 
 
 ```aws sts get-caller-identity --profile data_secrets```
 
-![data_secrets](<assests/Secrets Keys - data_secrets.png>)
+<p align="center">
+  <img src="assests/Secrets Keys - data_secrets.png>" width="700">
+</p>
 
 ---
 
@@ -45,14 +47,18 @@ I started throwing commands to see what was alive in the account: S3, Lambda, RD
 
 Found something! There is an EC2 instance running and, most importantly, it has an IAM Role attached. This is my "foothold."
 
-![describ-instances](<assests/describe instances.png>)
+<p align="center">
+  <img src="assests/describe instances.png" width="700">
+</p>
 
 ---
 
 ## 🏹 Step 3: Storming the EC2 Instance
 I have a public IP, so let's see what ports are open. I used nmap for a quick scan:
 
-![nmap top ports](<assests/nmap top ports.png>)
+<p align="center">
+  <img src="assests/nmap top ports.png" width="700">
+</p>
 
 Port 22 (SSH) is open. But how do I get in if I don't have SSH keys? It occurred to me to check the UserData of the instance, which sometimes stores deployment scripts with sensitive info:
 
@@ -64,7 +70,9 @@ User: ec2-user
 
 Password: CloudGoatInstancePassword!
 
-![describe-instance-atttribute](assests/describe-user-data.png)
+<p align="center">
+  <img src="assests/describe-user-data.png" width="700">
+</p>
 
 ---
 
@@ -78,7 +86,9 @@ So the strategy was simple: log in via SSH using the credentials I stole from th
 Bash:
 ```curl http://169.254.169.254/latest/meta-data/iam/security-credentials/cg-ec2-role-[ID]```
 
-![ec2-retrieve-role-credentials](assests/retrieve-ec2-role-credentials.png)
+<p align="center">
+  <img src="assests/retrieve-ec2-role-credentials.png" width="700">
+</p>
 
 It worked! Now I have fresh temporary keys. I logged out of the instance, configured a new profile on my local machine (ec2_pwned), and continued the attack from my terminal.
 
@@ -98,17 +108,15 @@ I configured my third and final profile: db_user_pwned. This was my last card to
 
 ```aws secretsmanager list-secrets --profile db_user_pwned```
 
-![list-secrets](assests/list-secrets.png)
-
 <p align="center">
-  <img src="assests/list-secrets.png" width="600">
+  <img src="assests/list-secrets.png" width="700">
 </p>
 
 Now that I had the secret name, all that was left was to read it:
 aws secretsmanager get-secret-value --secret-id [NAME] --profile db_user_pwned
 
 <p align="center">
-  <img src="assests/final-flag.png" width="600">
+  <img src="assests/final-flag.png" width="700">
 </p>
 
 Mission accomplished! I managed to reach the final flag after jumping through three different identities.
