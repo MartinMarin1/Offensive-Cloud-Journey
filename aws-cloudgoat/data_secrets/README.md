@@ -35,6 +35,7 @@ Before moving an inch, I had to confirm the credentials actually worked and see 
 As any good auditor, the first thing I tried was checking my own permissions. I wanted to list my policies, but... I hit my first wall:
 
 ```aws iam list-user-policies --user-name cg-start-user-[ID] --profile data_secrets```
+and
 ```aws iam list-attached-user-policies --user-name cg-start-user-[ID] --profile data_secrets```
 
 I got a hard AccessDenied. This user has their IAM permissions blocked, which forced me to "poke around the walls" in other services to see what I could find.
@@ -48,7 +49,7 @@ I started throwing commands to see what was alive in the account: S3, Lambda, RD
 Found something! There is an EC2 instance running and, most importantly, it has an IAM Role attached. This is my "foothold."
 
 <p align="center">
-  <img src="assests/describe instances.png" width="700">
+  <img src="assests/describe instances.png" width="800">
 </p>
 
 ---
@@ -71,7 +72,7 @@ User: ec2-user
 Password: CloudGoatInstancePassword!
 
 <p align="center">
-  <img src="assests/describe-user-data.png" width="700">
+  <img src="assests/describe-user-data.png" width="900">
 </p>
 
 ---
@@ -79,7 +80,9 @@ Password: CloudGoatInstancePassword!
 ## ⛓️ Step 4: Escalating inside the instance
 Looking for another vector attack, I tried to see if I could modify the Security Groups to open more ports, but the system gave me an AccessDenied again. It seems I can't mess with the network settings.
 
-![ec2-describe-instances](assests/ec2-describe-instances.png)
+<p align="center">
+  <img src="assests/ec2-describe-instances.png" width="900">
+</p>
 
 So the strategy was simple: log in via SSH using the credentials I stole from the UserData. Once inside, my target was the IMDS (Metadata Service) to see if I could "grab" the credentials from the instance's role.
 
@@ -87,7 +90,7 @@ Bash:
 ```curl http://169.254.169.254/latest/meta-data/iam/security-credentials/cg-ec2-role-[ID]```
 
 <p align="center">
-  <img src="assests/retrieve-ec2-role-credentials.png" width="700">
+  <img src="assests/retrieve-ec2-role-credentials.png" width="950">
 </p>
 
 It worked! Now I have fresh temporary keys. I logged out of the instance, configured a new profile on my local machine (ec2_pwned), and continued the attack from my terminal.
@@ -97,7 +100,9 @@ Now acting as ec2_pwned, I tried going straight for the Secrets Manager, but I g
 
 ```aws lambda list-functions --profile ec2_pwned```
 
-![lambda describe function](assests/lambda-describe-function.png)
+<p align="center">
+  <img src="assests/lambda-describe-function.png" width="950">
+</p>
 
 Bingo! I found a classic leak: credentials for a user named db_user were hardcoded directly into the Lambda's environment variables. This is a very common developer mistake.
 
@@ -120,64 +125,6 @@ aws secretsmanager get-secret-value --secret-id [NAME] --profile db_user_pwned
 </p>
 
 Mission accomplished! I managed to reach the final flag after jumping through three different identities.
-
----
-
-
-
-
-
-
-
-
-## 🧠 Final Thoughts
-
-This lab taught me that cloud security is a chain. No matter how much you lock down IAM, if you leave a password in userData or an Access Key in a Lambda environment variable, an attacker will eventually find the way in.
-
-What did I learn?
-
-Never put passwords in UserData.
-
-Use IMDSv2 to prevent role exfiltration.
-
-Don't store secrets in Lambda environment variables.
-
----
-
-## 🛡️ Security Analysis & Mitigation Strategies
-
-This scenario is a textbook example of "Security through Obscurity" failing against a structured attack. Below is a breakdown of the misconfigurations found and how to fix them using AWS Best Practices.
-
-### 1. Hardcoded Credentials in UserData
-* **The Flaw:** Deployment scripts often contain sensitive information, and any user with `ec2:DescribeInstanceAttribute` permissions can read them in plain text.
-* **The Fix:** Never store secrets in UserData. Use **AWS Secrets Manager** or **Systems Manager Parameter Store**. Access these services using **IAM Roles for EC2** so that no credentials ever touch the disk or the metadata attributes.
-
-### 2. Use of IMDSv1 (Instance Metadata Service)
-* **The Flaw:** IMDSv1 is session-less, making it vulnerable to SSRF (Server-Side Request Forgery) and simple `curl` commands to exfiltrate IAM role credentials.
-* **The Fix:** Enforce **IMDSv2**, which requires a session token (PUT request) to access metadata. You can disable IMDSv1 globally or per instance using:
-    ```bash
-    aws ec2 modify-instance-metadata-options --instance-id [ID] --http-tokens required
-    ```
-
-### 3. Secrets in Lambda Environment Variables
-* **The Flaw:** Storing `AWS_ACCESS_KEY_ID` or other secrets in environment variables makes them visible to anyone with `lambda:GetFunction` permissions.
-* **The Fix:** * **Option A:** Use **KMS (Key Management Service)** to encrypt environment variables at rest.
-    * **Option B (Best):** Do not store credentials at all. Give the Lambda its own **Execution Role** with the specific permissions it needs to perform its task, following the **Principle of Least Privilege (PoLP)**.
-
-### 4. Over-permissive IAM Policies (The Final Blow)
-* **The Flaw:** The `db_user` had permissions to read secrets that were not relevant to its role. In AWS, a "db_user" should only have access to specific database secrets, not `Resource: "*"`.
-* **The Fix:** Scope down IAM policies using **Resource-level permissions**. Instead of `Resource: "*"`, use the specific ARN of the secret:
-    ```json
-    "Resource": "arn:aws:secretsmanager:region:account:secret:specific-secret-id"
-    ```
-
-### 5. Lack of Monitoring and Guardrails
-* **The Flaw:** Throughout the attack, several `AccessDenied` events occurred. In a production environment, these should have triggered an alarm.
-* **The Fix:** Enable **AWS CloudTrail** and use **Amazon GuardDuty** to detect anomalous behavior. Implement **Service Control Policies (SCPs)** at the Organization level to prevent users from disabling logging or modifying critical security boundaries.
-
----
-
-
 
 ---
 
