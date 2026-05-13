@@ -28,9 +28,6 @@ First, I configured the profile and validated my identity:
 ```aws configure --profile iam_privesc```
 ```aws sts get-caller-identity --profile iam_privesc```
 
-<p align="center">
-<img src="assests/sts-get-caller-identity.png" width="700">
-</p>
 
 ## 🔍 Step 2: Permission Enumeration (The "Manager" Power)
 I needed to know exactly what this manager could do. I checked both attached and inline policies:
@@ -58,7 +55,7 @@ JSON
 }
 
 <p align="center">
-<img src="assests/self-manage-access.png" width="850">
+<img src="assests/self-manage-access.png" width="600">
 </p>
 
 TagResources Policy:
@@ -71,7 +68,7 @@ JSON
 }
 
 <p align="center">
-<img src="assests/tag-resources.png" width="850">
+<img src="assests/tag-resources.png" width="600">
 </p>
 
 The Vulnerability: I can tag any user, and if a user has the tag developer: true, I can manage (create/delete) their Access Keys. This is a massive privilege escalation vector.
@@ -84,7 +81,7 @@ I listed the users in the account to see who I could "manage":
 ```aws iam list-users --profile iam_privesc````
 
 <p align="center">
-<img src="assests/list-users.png" width="700">
+<img src="assests/list-users.png" width="600">
 </p>
 
 We have three users: admin, developer, and manager. Obviously, my target is the admin.
@@ -92,7 +89,7 @@ We have three users: admin, developer, and manager. Obviously, my target is the 
 I also found the goal: a role named cg_secretsmanager_[ID] that requires MFA to be assumed.
 
 <p align="center">
-<img src="assests/role-mfa-condition.png" width="850">
+<img src="assests/role-mfa-condition.png" width="700">
 </p>
 
 ---
