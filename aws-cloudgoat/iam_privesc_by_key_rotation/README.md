@@ -26,8 +26,10 @@ Secret Access Key: O-----------------------
 First, I configured the profile and validated my identity:
 
 ```aws configure --profile iam_privesc```
+
 ```aws sts get-caller-identity --profile iam_privesc```
 
+---
 
 ## 🔍 Step 2: Permission Enumeration (The "Manager" Power)
 I needed to know exactly what this manager could do. I checked both attached and inline policies:
