@@ -21,7 +21,7 @@ My goal is to bridge the gap between "knowing" cloud services and "understanding
 | Scenario | Core Concept | Difficulty | Link |
 | :--- | :--- | :--- | :--- |
 | **data_secrets** | `ec2:DescribeInstanceAttribute` & EC2 Exploit | Easy | [Writeup](./aws-cloudgoat/data_secrets/) |
-| **data_secrets** | `iam:create-access-key` & IAM Exploit | Easy | [Writeup](./aws-cloudgoat/iam_privesc_by_key_rotation/) |
+| **iam_privesc_by_key_rotation** | `iam:create-access-key` & IAM Exploit | Easy | [Writeup](./aws-cloudgoat/iam_privesc_by_key_rotation/) |
 | *In Progress* | IAM User/Role enumeration | Medium | TBD |
 
 ### 🏗️ CI/CD & DevSecOps
